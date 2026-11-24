@@ -1,0 +1,6 @@
+{
+  "name": "Apex Group — Powering a World in Motion",
+  "description": "Immersive 3D corporate experience uniting Apex Road Lines, Apex Bio Fuel India, Pranar Oils & Chemicals, Apex Natural Lubes & Chemicals FZCO, and JS Fuels.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

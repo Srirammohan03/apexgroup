@@ -1,0 +1,90 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --apex-bg: #F2F3F5;
+  --apex-surface: #FFFFFF;
+  --apex-text-primary: #171C22;
+  --apex-text-secondary: #59636E;
+  --apex-border: rgba(23, 28, 34, 0.12);
+  --apex-nav-bg: rgba(242, 243, 245, 0.9);
+  --apex-scrim-rgb: 242, 243, 245;
+  --apex-accent: #F28C28;
+}
+
+.dark {
+  --apex-bg: #0B0D10;
+  --apex-surface: #171C22;
+  --apex-text-primary: #F7F9FB;
+  --apex-text-secondary: #B8C0C8;
+  --apex-border: rgba(255, 255, 255, 0.12);
+  --apex-nav-bg: rgba(11, 13, 16, 0.9);
+  --apex-scrim-rgb: 11, 13, 16;
+  --apex-accent: #F28C28;
+}
+
+@theme {
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-obsidian: #0B0D10;
+  --color-surface: #171C22;
+  --color-amber-accent: #F28C28;
+  --color-metallic: #B8C0C8;
+  --color-ivory: #F7F9FB;
+}
+
+@layer base {
+  html {
+    background-color: var(--apex-bg);
+    color: var(--apex-text-primary);
+    font-family: var(--font-sans);
+    scroll-behavior: auto;
+    transition:
+      background-color 1200ms cubic-bezier(0.22, 1, 0.36, 1),
+      color 1200ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  body {
+    background-color: var(--apex-bg);
+    color: var(--apex-text-primary);
+    overflow-x: hidden;
+    transition:
+      background-color 1200ms cubic-bezier(0.22, 1, 0.36, 1),
+      color 1200ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+  }
+}
+
+.apex-theme-surface {
+  background-color: var(--apex-surface);
+  border-color: var(--apex-border);
+  transition:
+    background-color 1200ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 1200ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 1200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.apex-theme-bg {
+  background-color: var(--apex-bg);
+  transition: background-color 1200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html,
+  body,
+  .apex-theme-surface,
+  .apex-theme-bg {
+    scroll-behavior: auto !important;
+    transition-duration: 0ms !important;
+  }
+}
