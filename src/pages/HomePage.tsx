@@ -1,62 +1,63 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+// src\pages\HomePage.tsx
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   createInitialExperienceState,
   initMasterScrollTimeline,
   type MasterTimelineController,
-} from '../animations/masterTimeline';
+} from "../animations/masterTimeline";
 import {
   evaluateSceneState,
   getSceneKeyframes,
   type LiveExperienceState,
-} from '../animations/sceneConfig';
-import { ChapterProgressIndicator } from '../components/layout/ChapterProgressIndicator';
-import { DevToolsOverlay } from '../components/layout/DevToolsOverlay';
-import { Navbar } from '../components/layout/Navbar';
-import { BusinessStageSection } from '../components/sections/BusinessStageSection';
-import { CorporateGroupSection } from '../components/sections/CorporateGroupSection';
-import { FinaleSection } from '../components/sections/FinaleSection';
-import { HeroSection } from '../components/sections/HeroSection';
-import { APEX_BUSINESSES } from '../data/businesses';
-import { MasterCanvas } from '../experience/MasterCanvas';
-import { useReducedMotion } from '../hooks/useReducedMotion';
-import { useThemeMode } from '../hooks/useThemeMode';
-import { useViewportMode } from '../hooks/useViewportMode';
+} from "../animations/sceneConfig";
+import { ChapterProgressIndicator } from "../components/layout/ChapterProgressIndicator";
+import { DevToolsOverlay } from "../components/layout/DevToolsOverlay";
+import { Navbar } from "../components/layout/Navbar";
+import { BusinessStageSection } from "../components/sections/BusinessStageSection";
+import { CorporateGroupSection } from "../components/sections/CorporateGroupSection";
+import { FinaleSection } from "../components/sections/FinaleSection";
+import { HeroSection } from "../components/sections/HeroSection";
+import { APEX_BUSINESSES } from "../data/businesses";
+import { MasterCanvas } from "../experience/MasterCanvas";
+import { useReducedMotion } from "../hooks/useReducedMotion";
+import { useThemeMode } from "../hooks/useThemeMode";
+import { useViewportMode } from "../hooks/useViewportMode";
 
 const STAGE_PAIRS = [
   {
     bizIdx: 0,
-    introId: 'scene-02-roadlines-intro',
-    capId: 'scene-03-roadlines-capabilities',
-    introNextLabel: 'Fleet Capabilities',
-    capNextLabel: 'Continue to Bio Fuel',
+    introId: "scene-02-roadlines-intro",
+    capId: "scene-03-roadlines-capabilities",
+    introNextLabel: "Explore Transport Services",
+    capNextLabel: "Discover Apex Bio Fuel",
   },
   {
     bizIdx: 1,
-    introId: 'scene-04-biofuel-intro',
-    capId: 'scene-05-biofuel-capabilities',
-    introNextLabel: 'Renewable Flow',
-    capNextLabel: 'Continue to Pranar Oils',
+    introId: "scene-04-biofuel-intro",
+    capId: "scene-05-biofuel-capabilities",
+    introNextLabel: "Explore Energy Solutions",
+    capNextLabel: "Discover Pranar Oils",
   },
   {
     bizIdx: 2,
-    introId: 'scene-06-pranar-intro',
-    capId: 'scene-07-pranar-capabilities',
-    introNextLabel: 'Specialty Chemicals',
-    capNextLabel: 'Continue to Natural Lubes',
+    introId: "scene-06-pranar-intro",
+    capId: "scene-07-pranar-capabilities",
+    introNextLabel: "Explore Industrial Solutions",
+    capNextLabel: "Discover Natural Lubes",
   },
   {
     bizIdx: 3,
-    introId: 'scene-08-lubes-intro',
-    capId: 'scene-09-lubes-tech',
-    introNextLabel: 'Engine Protection',
-    capNextLabel: 'Continue to JS Fuels',
+    introId: "scene-08-lubes-intro",
+    capId: "scene-09-lubes-tech",
+    introNextLabel: "Explore Lubricant Range",
+    capNextLabel: "Discover JS Fuels",
   },
   {
     bizIdx: 4,
-    introId: 'scene-10-jsfuels-intro',
-    capId: 'scene-11-jsfuels-experience',
-    introNextLabel: 'Forecourt Experience',
-    capNextLabel: 'View Connected Future',
+    introId: "scene-10-jsfuels-intro",
+    capId: "scene-11-jsfuels-experience",
+    introNextLabel: "Explore Fuel Solutions",
+    capNextLabel: "Discover Our Group",
   },
 ];
 
@@ -65,12 +66,15 @@ export function HomePage() {
   const reducedMotion = useReducedMotion();
   const { theme, isDay, toggleTheme } = useThemeMode();
 
-  const keyframes = useMemo(() => getSceneKeyframes(viewportMode), [viewportMode]);
+  const keyframes = useMemo(
+    () => getSceneKeyframes(viewportMode),
+    [viewportMode],
+  );
 
   const scrollTrackRef = useRef<HTMLDivElement>(null);
   const timelineCtrlRef = useRef<MasterTimelineController | null>(null);
   const stateRef = useRef<LiveExperienceState>(
-    createInitialExperienceState(keyframes, isDay ? 1 : 0)
+    createInitialExperienceState(keyframes, isDay ? 1 : 0),
   );
 
   const [activeSceneIndex, setActiveSceneIndex] = useState(0);
@@ -86,7 +90,7 @@ export function HomePage() {
     evaluateSceneState(
       keyframes,
       stateRef.current.scrollProgress,
-      stateRef.current.interpolated
+      stateRef.current.interpolated,
     );
 
     const ctrl = initMasterScrollTimeline(
@@ -94,7 +98,7 @@ export function HomePage() {
       keyframes,
       stateRef,
       reducedMotion,
-      (nextIndex) => setActiveSceneIndex(nextIndex)
+      (nextIndex) => setActiveSceneIndex(nextIndex),
     );
     timelineCtrlRef.current = ctrl;
 
@@ -111,8 +115,8 @@ export function HomePage() {
       stateRef.current.mouseNorm.x = nx;
       stateRef.current.mouseNorm.y = ny;
     };
-    window.addEventListener('pointermove', onPointerMove, { passive: true });
-    return () => window.removeEventListener('pointermove', onPointerMove);
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    return () => window.removeEventListener("pointermove", onPointerMove);
   }, []);
 
   const handleJumpToScene = useCallback((sceneIndex: number) => {
@@ -124,7 +128,10 @@ export function HomePage() {
   }, []);
 
   return (
-    <div id="top" className="relative min-h-screen apex-theme-bg text-[var(--apex-text-primary)]">
+    <div
+      id="top"
+      className="relative min-h-screen apex-theme-bg text-[var(--apex-text-primary)]"
+    >
       <MasterCanvas stateRef={stateRef} />
 
       <Navbar
@@ -138,7 +145,7 @@ export function HomePage() {
         <div ref={scrollTrackRef} className="relative">
           <HeroSection
             onExplore={() => handleJumpToScene(1)}
-            onDirectory={() => handleNavigateSection('businesses')}
+            onDirectory={() => handleNavigateSection("businesses")}
           />
 
           {STAGE_PAIRS.map((pair) => {
@@ -150,25 +157,32 @@ export function HomePage() {
                   business={biz}
                   variant="intro"
                   nextLabel={pair.introNextLabel}
-                  onNextScene={() => handleJumpToScene(biz.capabilitiesSceneIndex)}
+                  onNextScene={() =>
+                    handleJumpToScene(biz.capabilitiesSceneIndex)
+                  }
                 />
                 <BusinessStageSection
                   id={pair.capId}
                   business={biz}
                   variant="capabilities"
                   nextLabel={pair.capNextLabel}
-                  onNextScene={() => handleJumpToScene(biz.capabilitiesSceneIndex + 1)}
+                  onNextScene={() =>
+                    handleJumpToScene(biz.capabilitiesSceneIndex + 1)
+                  }
                 />
               </div>
             );
           })}
 
           <FinaleSection
-            onExploreDirectory={() => handleNavigateSection('businesses')}
+            onExploreDirectory={() => handleNavigateSection("businesses")}
           />
         </div>
 
-        <CorporateGroupSection onJumpToBusinessScene={handleJumpToScene} />
+        <CorporateGroupSection
+          onJumpToBusinessScene={handleJumpToScene}
+          onNavigateSection={handleNavigateSection}
+        />
       </main>
 
       <ChapterProgressIndicator
@@ -176,7 +190,7 @@ export function HomePage() {
         onSelectScene={handleJumpToScene}
       />
 
-      <DevToolsOverlay />
+      {/* <DevToolsOverlay /> */}
     </div>
   );
 }

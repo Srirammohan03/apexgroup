@@ -25,7 +25,7 @@ export function ChapterProgressIndicator({
   return (
     <aside
       aria-label="Story Chapter Navigation"
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-30 w-[min(780px,92vw)] pointer-events-none hidden sm:flex flex-col items-center"
+      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-30 w-[min(800px,92vw)] pointer-events-none hidden sm:flex flex-col items-center"
     >
       <div className="pointer-events-auto w-full bg-[var(--apex-surface)]/95 border border-[var(--apex-border)] rounded-sm px-4 py-2.5 shadow-lg">
         <div className="flex items-center justify-between gap-2 overflow-x-auto">

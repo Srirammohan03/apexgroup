@@ -1,194 +1,163 @@
-import { useEffect, useMemo, useRef } from 'react';
-import * as THREE from 'three';
+import { useGLTF } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
+import { useEffect, useMemo } from "react";
+import * as THREE from "three";
 import {
   applyDissolveToGroup,
   type DissolveUniforms,
-} from '../shaders/dissolveTransformShader';
-import { createDispenserDisplayTexture } from './proceduralTextures';
+} from "../shaders/dissolveTransformShader";
+
+const MODEL_URL = `${import.meta.env.BASE_URL}assets/models/js-fuel-dispenser.glb`;
+const TARGET_HEIGHT = 2.1;
+const MODEL_ROTATION_Y = 0;
+const METER_SPEED = 0.65;
 
 interface FuelDispenserModelProps {
   dissolveUniforms?: DissolveUniforms;
 }
 
-export function FuelDispenserModel({ dissolveUniforms }: FuelDispenserModelProps) {
-  const groupRef = useRef<THREE.Group>(null);
+export function FuelDispenserModel({
+  dissolveUniforms,
+}: FuelDispenserModelProps) {
+  const { scene, animations } = useGLTF(MODEL_URL);
 
-  const assets = useMemo(() => {
-    const displayTex = createDispenserDisplayTexture();
+  const model = useMemo(() => {
+    const clone = scene.clone(true);
 
-    const colShape = new THREE.Shape();
-    colShape.moveTo(-0.46, 0.14);
-    colShape.lineTo(0.46, 0.14);
-    colShape.lineTo(0.46, 2.08);
-    colShape.quadraticCurveTo(0.46, 2.22, 0.32, 2.24);
-    colShape.lineTo(-0.32, 2.24);
-    colShape.quadraticCurveTo(-0.46, 2.22, -0.46, 2.08);
-    colShape.closePath();
+    const materials = new Map<THREE.Material, THREE.Material>();
 
-    const housingGeo = new THREE.ExtrudeGeometry(colShape, {
-      depth: 0.46,
-      bevelEnabled: true,
-      bevelThickness: 0.04,
-      bevelSize: 0.035,
-      bevelSegments: 4,
-    });
-    housingGeo.translate(0, 0, -0.23);
+    const cloneMaterial = (source: THREE.Material) => {
+      const existing = materials.get(source);
 
-    const hoseCurveL = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(-0.48, 1.82, 0),
-      new THREE.Vector3(-0.74, 1.32, 0.06),
-      new THREE.Vector3(-0.68, 0.68, 0.14),
-      new THREE.Vector3(-0.54, 1.15, 0.08),
-    ]);
-    const hoseGeoL = new THREE.TubeGeometry(hoseCurveL, 28, 0.028, 10, false);
+      if (existing) return existing;
 
-    const hoseCurveR = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0.48, 1.82, 0),
-      new THREE.Vector3(0.74, 1.32, -0.06),
-      new THREE.Vector3(0.68, 0.68, -0.14),
-      new THREE.Vector3(0.54, 1.15, -0.08),
-    ]);
-    const hoseGeoR = new THREE.TubeGeometry(hoseCurveR, 28, 0.028, 10, false);
+      const material = source.clone();
 
-    const housingMat = new THREE.MeshStandardMaterial({
-      color: '#1C222B',
-      metalness: 0.64,
-      roughness: 0.32,
-    });
+      if (material instanceof THREE.MeshStandardMaterial) {
+        const name = material.name.toLowerCase();
 
-    const steelTrimMat = new THREE.MeshStandardMaterial({
-      color: '#D2D9E0',
-      metalness: 0.92,
-      roughness: 0.18,
-    });
+        if (
+          name.includes("steel") ||
+          name.includes("chrome") ||
+          name.includes("metal")
+        ) {
+          material.color.set("#929DA8");
+          material.metalness = 1;
+          material.roughness = 0.18;
+          material.envMapIntensity = 1.8;
+        } else if (
+          name.includes("orange") ||
+          name.includes("amber") ||
+          name.includes("brass")
+        ) {
+          material.color.set("#F28C28");
+          material.metalness = 0.45;
+          material.roughness = 0.28;
+          material.envMapIntensity = 1.2;
+        } else {
+          material.envMapIntensity = 1.2;
+        }
 
-    const accentMat = new THREE.MeshStandardMaterial({
-      color: '#F28C28',
-      emissive: '#F28C28',
-      emissiveIntensity: 0.38,
-      metalness: 0.25,
-      roughness: 0.3,
-    });
+        material.needsUpdate = true;
+      }
 
-    const rubberMat = new THREE.MeshStandardMaterial({
-      color: '#121417',
-      metalness: 0.05,
-      roughness: 0.88,
+      materials.set(source, material);
+
+      return material;
+    };
+
+    clone.traverse((object) => {
+      if (!(object instanceof THREE.Mesh)) return;
+
+      object.material = Array.isArray(object.material)
+        ? object.material.map(cloneMaterial)
+        : cloneMaterial(object.material);
+
+      const isPanel = /^(meter_|branding_|crown_brand_)/.test(object.name);
+
+      object.castShadow = !isPanel;
+      object.receiveShadow = !isPanel;
     });
 
-    const displayMat = new THREE.MeshStandardMaterial({
-      map: displayTex,
-      emissiveMap: displayTex,
-      emissive: '#FFFFFF',
-      emissiveIntensity: 0.5,
-      roughness: 0.12,
-      metalness: 0.1,
-    });
+    const oriented = new THREE.Group();
+
+    oriented.rotation.y = MODEL_ROTATION_Y;
+    oriented.add(clone);
+    oriented.updateMatrixWorld(true);
+
+    const bounds = new THREE.Box3().setFromObject(oriented);
+
+    const size = bounds.getSize(new THREE.Vector3());
+
+    const center = bounds.getCenter(new THREE.Vector3());
+
+    const centered = new THREE.Group();
+
+    centered.position.set(-center.x, -bounds.min.y, -center.z);
+
+    centered.add(oriented);
+
+    const root = new THREE.Group();
+
+    root.name = "dispenser_root";
+
+    root.scale.setScalar(TARGET_HEIGHT / Math.max(size.y, 0.001));
+
+    root.add(centered);
+
+    if (dissolveUniforms) {
+      applyDissolveToGroup(root, dissolveUniforms);
+    }
 
     return {
-      displayTex,
-      housingGeo,
-      hoseGeoL,
-      hoseGeoR,
-      housingMat,
-      steelTrimMat,
-      accentMat,
-      rubberMat,
-      displayMat,
+      root,
+      clone,
+      mixer: new THREE.AnimationMixer(clone),
+      materials: [...materials.values()],
     };
-  }, []);
+  }, [scene, dissolveUniforms]);
 
   useEffect(() => {
-    const group = groupRef.current;
-    if (!group) return;
-    if (dissolveUniforms) {
-      applyDissolveToGroup(group, dissolveUniforms);
-    }
-  }, [dissolveUniforms]);
+    const clip = THREE.AnimationClip.findByName(
+      animations,
+      "JS_Fuel_Meter_Cycle",
+    );
+
+    if (!clip) return;
+
+    const action = model.mixer.clipAction(clip);
+
+    action.reset().setLoop(THREE.LoopRepeat, Infinity);
+
+    action.timeScale = METER_SPEED;
+    action.play();
+
+    model.mixer.update(0);
+
+    return () => {
+      action.stop();
+      model.mixer.stopAllAction();
+      model.mixer.uncacheRoot(model.clone);
+    };
+  }, [model, animations]);
 
   useEffect(() => {
     return () => {
-      assets.displayTex.dispose();
-      assets.housingGeo.dispose();
-      assets.hoseGeoL.dispose();
-      assets.hoseGeoR.dispose();
-      assets.housingMat.dispose();
-      assets.steelTrimMat.dispose();
-      assets.accentMat.dispose();
-      assets.rubberMat.dispose();
-      assets.displayMat.dispose();
+      model.materials.forEach((material) => {
+        material.dispose();
+      });
     };
-  }, [assets]);
+  }, [model]);
 
-  return (
-    <group ref={groupRef} name="dispenser_root" scale={0.9}>
-      <mesh position={[0, 0.07, 0]} material={assets.steelTrimMat} castShadow receiveShadow>
-        <boxGeometry args={[1.08, 0.14, 0.66]} />
-      </mesh>
+  useFrame((_, delta) => {
+    if (dissolveUniforms && dissolveUniforms.uVisibility.value <= 0.004) {
+      return;
+    }
 
-      <mesh
-        name="column_housing"
-        geometry={assets.housingGeo}
-        material={assets.housingMat}
-        castShadow
-        receiveShadow
-      />
+    model.mixer.update(Math.min(delta, 0.05));
+  });
 
-      <mesh position={[0, 2.28, 0]} material={assets.accentMat}>
-        <boxGeometry args={[0.92, 0.09, 0.48]} />
-      </mesh>
-
-      <mesh name="display_front" position={[0, 1.66, 0.275]} material={assets.displayMat}>
-        <planeGeometry args={[0.68, 0.36]} />
-      </mesh>
-      <mesh
-        name="display_back"
-        position={[0, 1.66, -0.275]}
-        rotation={[0, Math.PI, 0]}
-        material={assets.displayMat}
-      >
-        <planeGeometry args={[0.68, 0.36]} />
-      </mesh>
-
-      {/* Keypad & 4-fuel grade selector buttons on front & back */}
-      {[-0.24, -0.08, 0.08, 0.24].map((xPos, idx) => (
-        <group key={`grade-btn-${idx}`}>
-          <mesh position={[xPos, 1.32, 0.276]} material={assets.accentMat}>
-            <boxGeometry args={[0.11, 0.06, 0.025]} />
-          </mesh>
-          <mesh position={[xPos, 1.32, -0.276]} material={assets.accentMat}>
-            <boxGeometry args={[0.11, 0.06, 0.025]} />
-          </mesh>
-        </group>
-      ))}
-
-      <mesh position={[0, 0.68, 0.27]} material={assets.steelTrimMat}>
-        <boxGeometry args={[0.74, 0.86, 0.02]} />
-      </mesh>
-      <mesh position={[0, 0.68, -0.27]} material={assets.steelTrimMat}>
-        <boxGeometry args={[0.74, 0.86, 0.02]} />
-      </mesh>
-
-      <mesh name="hose_left" geometry={assets.hoseGeoL} material={assets.rubberMat} castShadow />
-      <mesh name="hose_right" geometry={assets.hoseGeoR} material={assets.rubberMat} castShadow />
-      <mesh
-        name="nozzle_left"
-        position={[-0.53, 1.24, 0.08]}
-        rotation={[0, 0, -0.25]}
-        material={assets.steelTrimMat}
-        castShadow
-      >
-        <boxGeometry args={[0.07, 0.24, 0.08]} />
-      </mesh>
-      <mesh
-        name="nozzle_right"
-        position={[0.53, 1.24, -0.08]}
-        rotation={[0, 0, 0.25]}
-        material={assets.steelTrimMat}
-        castShadow
-      >
-        <boxGeometry args={[0.07, 0.24, 0.08]} />
-      </mesh>
-    </group>
-  );
+  return <primitive object={model.root} dispose={null} />;
 }
+
+useGLTF.preload(MODEL_URL);
